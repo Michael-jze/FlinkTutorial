@@ -16,5 +16,5 @@ public class SensorReading {
         this.temperature = temperature;
     }
 
-    
+
 }
