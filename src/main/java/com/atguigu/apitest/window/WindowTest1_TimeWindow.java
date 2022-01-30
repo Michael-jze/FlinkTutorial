@@ -142,6 +142,9 @@ public class WindowTest1_TimeWindow {
             }
         });
 
+        // 其他可选API的使用范例:
+        dataStream.keyBy("id").timeWindow(Time.seconds(15)).allowedLateness(Time.minutes(1));// 创建一个允许一分钟延迟的时间窗口
+
 
         env.execute();
     }
