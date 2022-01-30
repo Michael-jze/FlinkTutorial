@@ -18,6 +18,7 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTime
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 public class WindowTest1_TimeWindow {
     public static void main(String[] args) throws Exception{
@@ -144,7 +145,14 @@ public class WindowTest1_TimeWindow {
 
         // 其他可选API的使用范例:
         dataStream.keyBy("id").timeWindow(Time.seconds(15)).allowedLateness(Time.minutes(1));// 创建一个允许一分钟延迟的时间窗口
-
+        // 在标记的窗口关闭时间生成第一个数据结果. 等待一分钟并在这一分钟内不断地更新结果. 结果的展现形式是 1 + N, 第一个是默认结果, 返回N个更新结果
+        // 使用侧输出流进行迟到数据的处理:
+        SingleOutputStreamOperator<SensorReading> sumStream = dataStream.keyBy("id").timeWindow(Time.seconds(15)).allowedLateness(Time.minutes(1))
+                .sideOutputLateData(new OutputTag<SensorReading>("late") {
+                }).sum("temperature");
+        sumStream.getSideOutput(new OutputTag<SensorReading>("late") {
+        }).print();
+        // 想要后续进行合并则需要其他的批处理进行合并
 
         env.execute();
     }
