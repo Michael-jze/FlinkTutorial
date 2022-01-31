@@ -32,6 +32,14 @@ public class WindowTest3_EventTimeWindow {
             }
         });
 
+        // 如果事件本来就是升序的话直接按照升序数据设置事件时间和watermark
+//        dataStream.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<SensorReading>() {
+//            @Override
+//            public long extractAscendingTimestamp(SensorReading sensorReading) {
+//                return sensorReading.getTimestamp()*1000L;
+//            }
+//        });
+
         env.execute();
     }
 }
