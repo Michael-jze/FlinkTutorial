@@ -40,6 +40,10 @@ public class WindowTest3_EventTimeWindow {
 //            }
 //        });
 
+        // 基于事件时间的开窗聚合: 统计15秒内的温度最小值
+        SingleOutputStreamOperator<SensorReading> Min_15s = dataStream.keyBy("id").
+                timeWindow(Time.seconds(15)).minBy("temperature");
+
         env.execute();
     }
 }
