@@ -1,17 +1,14 @@
 package com.atguigu.apitest.state;
 
 import com.atguigu.apitest.beans.SensorReading;
-import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.common.state.*;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.streaming.api.checkpoint.ListCheckpointed;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-
-import java.util.Collections;
-import java.util.List;
+import org.apache.flink.util.Collector;
 
 public class StateTest1_KeyedState {
     public static void main(String[] args) throws Exception {
@@ -29,7 +26,9 @@ public class StateTest1_KeyedState {
         // 定义一个有状态的map操作:统计当前sensor的数据个数
         SingleOutputStreamOperator<Integer> resultStream = dataStream.keyBy("id").map(new MyCountMapper());
 
-        resultStream.print();
+//        resultStream.print();
+
+        SingleOutputStreamOperator<Double> resultStream2 = dataStream.keyBy("id").flatMap(new MyTempIncreaseWarning(10.0));
 
         env.execute();
     }
@@ -64,6 +63,31 @@ public class StateTest1_KeyedState {
             Integer tmp = keyCountState.value() + 1;
             keyCountState.update(tmp);
             return tmp;
+        }
+    }
+
+    public static class MyTempIncreaseWarning extends RichFlatMapFunction<SensorReading, Double>{
+        private final Double threshold;
+
+        private ValueState<Double> previousTempState;
+
+        public MyTempIncreaseWarning(Double threshold) {
+            this.threshold = threshold;
+        }
+
+        @Override
+        public void open(Configuration conf) throws Exception{
+            previousTempState = getRuntimeContext().getState(new ValueStateDescriptor<Double>("previous", Double.class));
+        }
+
+        @Override
+        public void flatMap(SensorReading value, Collector<Double> out) throws Exception {
+            Double lastTemp = previousTempState.value();
+            if (lastTemp != null){
+                double diff = Math.abs(value.getTemperature() - lastTemp);
+                if (diff >= threshold) out.collect(value.getTemperature());
+            }
+            previousTempState.update(value.getTemperature());
         }
     }
 }
