@@ -7,6 +7,8 @@ import org.apache.flink.runtime.state.memory.MemoryStateBackend;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.streaming.api.functions.co.CoProcessFunction;
 
 public class StateTest3_FaultTolerance {
     public static void main(String[] args) throws Exception {
@@ -28,6 +30,7 @@ public class StateTest3_FaultTolerance {
             return new SensorReading(fields[0], new Long(fields[1]), new Double(fields[2]));
         });
 
+//        dataStream.process(new CoProcessFunction<>())
 
 
         env.execute();
